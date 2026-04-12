@@ -4,13 +4,52 @@ final class ADBService {
     let sdkPath: String?
 
     init() {
+        // 1. Process environment — works when launched from a terminal or via `launchctl setenv`
         let env = ProcessInfo.processInfo.environment
-        if let p = env["ANDROID_HOME"], !p.isEmpty           { sdkPath = p; return }
-        if let p = env["ANDROID_SDK_ROOT"], !p.isEmpty       { sdkPath = p; return }
+        if let p = env["ANDROID_HOME"], !p.isEmpty     { sdkPath = p; return }
+        if let p = env["ANDROID_SDK_ROOT"], !p.isEmpty { sdkPath = p; return }
+
+        // 2. Login shell — covers fish, zsh, bash configured via shell profiles.
+        //    macOS GUI apps are spawned by launchd and never inherit shell config env vars,
+        //    so we ask the user's configured shell directly.
+        if let p = Self.envFromLoginShell("ANDROID_HOME"), !p.isEmpty     { sdkPath = p; return }
+        if let p = Self.envFromLoginShell("ANDROID_SDK_ROOT"), !p.isEmpty { sdkPath = p; return }
+
+        // 3. Hard-coded fallback for Android Studio default install location
         let fallback = (NSHomeDirectory() as NSString)
             .appendingPathComponent("Library/Android/sdk")
         sdkPath = FileManager.default.fileExists(atPath: fallback) ? fallback : nil
     }
+
+    // MARK: - Shell env resolution
+
+    /// Spawns the user's configured login shell and echoes `variable`.
+    /// Returns nil if the shell can't be determined or the variable is unset.
+    private static func envFromLoginShell(_ variable: String) -> String? {
+        guard let shell = userShell() else { return nil }
+        let shellName = (shell as NSString).lastPathComponent
+        // fish loads config.fish in command (-c) mode; POSIX shells need -l for login profiles
+        let args = shellName == "fish"
+            ? ["-c", "echo $\(variable)"]
+            : ["-l", "-c", "echo $\(variable)"]
+        guard let output = try? run(shell, args) else { return nil }
+        let result = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        return result.isEmpty ? nil : result
+    }
+
+    /// Returns the shell configured for the current user via Directory Services (reliable on macOS).
+    private static func userShell() -> String? {
+        guard let output = try? run("/usr/bin/dscl", [".", "-read", NSHomeDirectory(), "UserShell"])
+        else { return nil }
+        // Output format: "UserShell: /opt/homebrew/bin/fish"
+        let shell = output
+            .components(separatedBy: ":")
+            .last?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return shell.isEmpty ? nil : shell
+    }
+
+    // MARK: - AVD operations
 
     func listAVDs() async throws -> [String] {
         guard let sdk = sdkPath else { throw SDKError.notFound }
