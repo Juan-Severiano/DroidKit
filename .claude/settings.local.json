@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm /Volumes/Juan/Developer/DroidKit/DroidKit/Item.swift /Volumes/Juan/Developer/DroidKit/DroidKit/ContentView.swift)",
+      "Bash(mkdir -p /Volumes/Juan/Developer/DroidKit/DroidKit/Models /Volumes/Juan/Developer/DroidKit/DroidKit/Services /Volumes/Juan/Developer/DroidKit/DroidKit/ViewModels /Volumes/Juan/Developer/DroidKit/DroidKit/Views)",
+      "Bash(xcodebuild -scheme DroidKit -configuration Debug build)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
+    ]
+  }
+}
