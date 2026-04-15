@@ -27,9 +27,9 @@ final class EmulatorViewModel {
             let usbDevices = await service.listUSBDevices()
             let wifiDevices = await service.listWiFiDevices()
             var allDevices = names.map { name in
-                let serial = running[name] ?? ""
-                let isRunning = !serial.isEmpty || service.isRunningLocally(name: name)
-                return AVDevice(name: name, serial: serial, status: isRunning ? .running : .stopped, kind: .emulator)
+                let emulatorSerial = running[name] ?? ""
+                let isRunning = !emulatorSerial.isEmpty || service.isRunningLocally(name: name)
+                return AVDevice(name: name, serial: emulatorSerial, status: isRunning ? .running : .stopped, kind: .emulator)
             }
             allDevices.append(contentsOf: usbDevices)
             allDevices.append(contentsOf: wifiDevices)
