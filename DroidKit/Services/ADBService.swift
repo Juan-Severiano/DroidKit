@@ -102,7 +102,10 @@ final class ADBService {
         runningProcesses[name] = process
     }
 
-    func stopEmulator(name: String) {
+    func stopEmulator(name: String, onStopped: @escaping @MainActor () -> Void) {
+        runningProcesses[name]?.terminationHandler = { _ in
+            Task { @MainActor in onStopped() }
+        }
         runningProcesses[name]?.terminate()
         runningProcesses.removeValue(forKey: name)
     }

@@ -49,8 +49,10 @@ final class EmulatorViewModel {
     }
 
     func stop(_ device: AVDevice) {
-        service.stopEmulator(name: device.name)
-        updateStatus(of: device.name, to: .stopped)
+        updateStatus(of: device.name, to: .stopping)
+        service.stopEmulator(name: device.name) { [weak self] in
+            self?.updateStatus(of: device.name, to: .stopped)
+        }
     }
 
     private func updateStatus(of name: String, to status: DeviceStatus) {

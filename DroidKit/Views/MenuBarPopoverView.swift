@@ -100,6 +100,7 @@ struct DeviceRow: View {
         case .stopped:  .gray
         case .starting: .yellow
         case .running:  .green
+        case .stopping: .orange
         }
     }
 
@@ -108,7 +109,7 @@ struct DeviceRow: View {
         switch device.status {
         case .stopped:
             Button("Start") { viewModel.launch(device) }.controlSize(.small)
-        case .starting:
+        case .starting, .stopping:
             ProgressView().controlSize(.small)
         case .running:
             Button("Stop") { viewModel.stop(device) }

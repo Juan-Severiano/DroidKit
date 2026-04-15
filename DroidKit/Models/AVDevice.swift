@@ -1,7 +1,7 @@
 import Foundation
 
 enum DeviceStatus: Equatable {
-    case stopped, starting, running
+    case stopped, starting, running, stopping
 }
 
 struct AVDevice: Identifiable {
