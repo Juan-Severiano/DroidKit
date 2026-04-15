@@ -62,11 +62,11 @@ final class ADBService {
     }
 
     // Returns AVD names of currently running emulators (detected via adb)
-    func runningAVDNames() async -> Set<String> {
-        guard let sdk = sdkPath else { return [] }
+    func runningAVDNames() async -> [String: String] {
+        guard let sdk = sdkPath else { return [:] }
         return await Task.detached(priority: .userInitiated) {
             guard let devicesOutput = try? Self.run(sdk + "/platform-tools/adb", ["devices"])
-            else { return Set<String>() }
+            else { return [String: String]() }
             let serials = devicesOutput.components(separatedBy: "\n")
                 .dropFirst()
                 .compactMap { line -> String? in
@@ -74,16 +74,68 @@ final class ADBService {
                     guard parts.count >= 2, parts[0].hasPrefix("emulator-") else { return nil }
                     return parts[0]
                 }
-            var names = Set<String>()
+            var nameToSerial = [String: String]()
             for serial in serials {
                 if let raw = try? Self.run(sdk + "/platform-tools/adb",
                                            ["-s", serial, "emu", "avd", "name"]),
                    let name = raw.components(separatedBy: "\n").first?.trimmingCharacters(in: .whitespaces),
                    !name.isEmpty {
-                    names.insert(name)
+                    nameToSerial[name] = serial
                 }
             }
-            return names
+            return nameToSerial
+        }.value
+    }
+
+    // Lists physical devices connected via USB cable
+    func listUSBDevices() async -> [AVDevice] {
+        guard let sdk = sdkPath else { return [] }
+        return await Task.detached(priority: .userInitiated) {
+            guard let devicesOutput = try? Self.run(sdk + "/platform-tools/adb", ["devices"])
+            else { return [AVDevice]() }
+            let serials = devicesOutput.components(separatedBy: "\n")
+                .dropFirst()
+                .compactMap { line -> String? in
+                    let parts = line.components(separatedBy: "\t")
+                    guard parts.count >= 2,
+                          parts[1].trimmingCharacters(in: .whitespaces) == "device",
+                          !parts[0].hasPrefix("emulator-"),
+                          !parts[0].contains(":")
+                    else { return nil }
+                    return parts[0]
+                }
+            var devices = [AVDevice]()
+            for serial in serials {
+                let displayName = Self.fetchDeviceDisplayName(sdk: sdk, serial: serial)
+                devices.append(AVDevice(name: displayName, serial: serial, status: .running, kind: .usbDevice))
+            }
+            return devices
+        }.value
+    }
+
+    // Lists devices connected via Wi-Fi (ip:port format serials)
+    func listWiFiDevices() async -> [AVDevice] {
+        guard let sdk = sdkPath else { return [] }
+        return await Task.detached(priority: .userInitiated) {
+            guard let devicesOutput = try? Self.run(sdk + "/platform-tools/adb", ["devices"])
+            else { return [AVDevice]() }
+            let serials = devicesOutput.components(separatedBy: "\n")
+                .dropFirst()
+                .compactMap { line -> String? in
+                    let parts = line.components(separatedBy: "\t")
+                    guard parts.count >= 2,
+                          parts[1].trimmingCharacters(in: .whitespaces) == "device",
+                          !parts[0].hasPrefix("emulator-"),
+                          parts[0].contains(":")
+                    else { return nil }
+                    return parts[0]
+                }
+            var devices = [AVDevice]()
+            for serial in serials {
+                let displayName = Self.fetchDeviceDisplayName(sdk: sdk, serial: serial)
+                devices.append(AVDevice(name: displayName, serial: serial, status: .running, kind: .wifiDevice))
+            }
+            return devices
         }.value
     }
 
@@ -102,9 +154,65 @@ final class ADBService {
         runningProcesses[name] = process
     }
 
-    func stopEmulator(name: String) {
+    func stopEmulator(name: String, onStopped: @escaping @MainActor () -> Void) {
+        runningProcesses[name]?.terminationHandler = { _ in
+            Task { @MainActor in onStopped() }
+        }
         runningProcesses[name]?.terminate()
         runningProcesses.removeValue(forKey: name)
+    }
+
+    // MARK: - Wi-Fi device operations
+
+    func connectWiFiDevice(host: String, port: Int = 5555) async throws -> String {
+        guard let sdk = sdkPath else { throw SDKError.notFound }
+        let serial = "\(host):\(port)"
+        return try await Task.detached(priority: .userInitiated) {
+            let output = try Self.run(sdk + "/platform-tools/adb", ["connect", serial])
+            let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.lowercased().contains("failed") || trimmed.lowercased().contains("error") {
+                throw WiFiError.connectionFailed(trimmed)
+            }
+            return serial
+        }.value
+    }
+
+    func disconnectWiFiDevice(serial: String) async throws {
+        guard let sdk = sdkPath else { throw SDKError.notFound }
+        try await Task.detached(priority: .userInitiated) {
+            _ = try Self.run(sdk + "/platform-tools/adb", ["disconnect", serial])
+        }.value
+    }
+
+    // Delay after switching to TCP/IP mode before connecting wirelessly
+    private static let tcpipTransitionDelay: Duration = .seconds(1)
+
+    // Converts a USB-connected device to Wi-Fi debugging
+    func convertToWiFi(serial: String) async throws -> String {
+        guard let sdk = sdkPath else { throw SDKError.notFound }
+        return try await Task.detached(priority: .userInitiated) {
+            // Step 1: Switch device to TCP/IP mode
+            _ = try Self.run(sdk + "/platform-tools/adb", ["-s", serial, "tcpip", "5555"])
+
+            // Brief pause to let the device restart in TCP/IP mode
+            try await Task.sleep(for: Self.tcpipTransitionDelay)
+
+            // Step 2: Get the device's Wi-Fi IP address
+            let ipOutput = try Self.run(sdk + "/platform-tools/adb",
+                                         ["-s", serial, "shell", "ip", "addr", "show", "wlan0"])
+            guard let ip = Self.parseIPAddress(from: ipOutput) else {
+                throw WiFiError.ipNotFound
+            }
+
+            // Step 3: Connect wirelessly
+            let wifiSerial = "\(ip):5555"
+            let connectOutput = try Self.run(sdk + "/platform-tools/adb", ["connect", wifiSerial])
+            let trimmed = connectOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.lowercased().contains("failed") || trimmed.lowercased().contains("error") {
+                throw WiFiError.connectionFailed(trimmed)
+            }
+            return wifiSerial
+        }.value
     }
 
     func isRunningLocally(name: String) -> Bool {
@@ -128,10 +236,46 @@ final class ADBService {
                       encoding: .utf8) ?? ""
     }
 
+    /// Queries device model and manufacturer via adb getprop and returns a display name.
+    private static func fetchDeviceDisplayName(sdk: String, serial: String) -> String {
+        let model = (try? run(sdk + "/platform-tools/adb",
+                               ["-s", serial, "shell", "getprop", "ro.product.model"]))?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? serial
+        let manufacturer = (try? run(sdk + "/platform-tools/adb",
+                                      ["-s", serial, "shell", "getprop", "ro.product.manufacturer"]))?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return manufacturer.isEmpty ? model : "\(manufacturer) \(model)"
+    }
+
+    /// Parses an IPv4 address from `ip addr show wlan0` output (inet line).
+    static func parseIPAddress(from output: String) -> String? {
+        for line in output.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.hasPrefix("inet ") else { continue }
+            // Format: "inet 192.168.1.42/24 ..."
+            let parts = trimmed.components(separatedBy: " ")
+            guard parts.count >= 2 else { continue }
+            let ipWithMask = parts[1]
+            return ipWithMask.components(separatedBy: "/").first
+        }
+        return nil
+    }
+
     enum SDKError: LocalizedError {
         case notFound
         var errorDescription: String? {
             "Android SDK not found. Set ANDROID_HOME or install at ~/Library/Android/sdk."
+        }
+    }
+
+    enum WiFiError: LocalizedError {
+        case connectionFailed(String)
+        case ipNotFound
+        var errorDescription: String? {
+            switch self {
+            case .connectionFailed(let msg): return "Wi-Fi connection failed: \(msg)"
+            case .ipNotFound: return "Could not determine device Wi-Fi IP address."
+            }
         }
     }
 }

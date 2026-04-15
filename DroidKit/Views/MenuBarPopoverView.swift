@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MenuBarPopoverView: View {
-    var viewModel: EmulatorViewModel
+    @Bindable var viewModel: EmulatorViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -50,6 +50,7 @@ struct MenuBarPopoverView: View {
                 }
             }
             .frame(maxHeight: 320)
+            wifiConnectRow
         }
     }
 
@@ -62,6 +63,25 @@ struct MenuBarPopoverView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 80)
         .padding(.horizontal, 12)
+    }
+
+    private var wifiConnectRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi")
+                .foregroundStyle(.secondary)
+            TextField("IP address", text: $viewModel.wifiHost)
+                .textFieldStyle(.roundedBorder)
+                .controlSize(.small)
+            if viewModel.isConnectingWiFi {
+                ProgressView().controlSize(.small)
+            } else {
+                Button("Connect") { Task { await viewModel.connectWiFi() } }
+                    .controlSize(.small)
+                    .disabled(viewModel.wifiHost.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     private var footer: some View {
@@ -100,15 +120,40 @@ struct DeviceRow: View {
         case .stopped:  .gray
         case .starting: .yellow
         case .running:  .green
+        case .stopping: .orange
         }
     }
 
     @ViewBuilder
     private var actionButton: some View {
+        switch device.kind {
+        case .usbDevice:
+            usbActionButton
+        case .emulator:
+            emulatorActionButton
+        case .wifiDevice:
+            Button("Disconnect") { Task { await viewModel.disconnectWiFi(device) } }
+                .controlSize(.small)
+                .foregroundStyle(.red)
+        }
+    }
+
+    @ViewBuilder
+    private var usbActionButton: some View {
+        if device.status == .starting {
+            ProgressView().controlSize(.small)
+        } else {
+            Button("To Wi-Fi") { Task { await viewModel.convertToWiFi(device) } }
+                .controlSize(.small)
+        }
+    }
+
+    @ViewBuilder
+    private var emulatorActionButton: some View {
         switch device.status {
         case .stopped:
             Button("Start") { viewModel.launch(device) }.controlSize(.small)
-        case .starting:
+        case .starting, .stopping:
             ProgressView().controlSize(.small)
         case .running:
             Button("Stop") { viewModel.stop(device) }

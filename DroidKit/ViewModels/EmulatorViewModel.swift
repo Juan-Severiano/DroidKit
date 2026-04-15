@@ -8,6 +8,8 @@ final class EmulatorViewModel {
     var isLoading = false
     var error: String?
     var sdkMissing = false
+    var wifiHost = ""
+    var isConnectingWiFi = false
 
     private let service = ADBService()
 
@@ -22,10 +24,16 @@ final class EmulatorViewModel {
         do {
             let names   = try await service.listAVDs()
             let running = await service.runningAVDNames()
-            devices = names.map { name in
-                let isRunning = running.contains(name) || service.isRunningLocally(name: name)
-                return AVDevice(name: name, status: isRunning ? .running : .stopped)
+            let usbDevices = await service.listUSBDevices()
+            let wifiDevices = await service.listWiFiDevices()
+            var allDevices = names.map { name in
+                let emulatorSerial = running[name] ?? ""
+                let isRunning = !emulatorSerial.isEmpty || service.isRunningLocally(name: name)
+                return AVDevice(name: name, serial: emulatorSerial, status: isRunning ? .running : .stopped, kind: .emulator)
             }
+            allDevices.append(contentsOf: usbDevices)
+            allDevices.append(contentsOf: wifiDevices)
+            devices = allDevices
         } catch ADBService.SDKError.notFound {
             sdkMissing = true
             devices = []
@@ -49,12 +57,52 @@ final class EmulatorViewModel {
     }
 
     func stop(_ device: AVDevice) {
-        service.stopEmulator(name: device.name)
-        updateStatus(of: device.name, to: .stopped)
+        updateStatus(of: device.name, to: .stopping)
+        service.stopEmulator(name: device.name) { [weak self] in
+            self?.updateStatus(of: device.name, to: .stopped)
+        }
     }
 
     private func updateStatus(of name: String, to status: DeviceStatus) {
         guard let idx = devices.firstIndex(where: { $0.name == name }) else { return }
         devices[idx].status = status
+    }
+
+    func connectWiFi() async {
+        let host = wifiHost.trimmingCharacters(in: .whitespaces)
+        guard !host.isEmpty else { return }
+        isConnectingWiFi = true
+        error = nil
+        do {
+            _ = try await service.connectWiFiDevice(host: host)
+            wifiHost = ""
+            await refresh()
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isConnectingWiFi = false
+    }
+
+    func disconnectWiFi(_ device: AVDevice) async {
+        error = nil
+        do {
+            try await service.disconnectWiFiDevice(serial: device.serial)
+            devices.removeAll { $0.serial == device.serial }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func convertToWiFi(_ device: AVDevice) async {
+        guard device.kind == .usbDevice else { return }
+        updateStatus(of: device.name, to: .starting)
+        error = nil
+        do {
+            _ = try await service.convertToWiFi(serial: device.serial)
+            await refresh()
+        } catch {
+            self.error = error.localizedDescription
+            updateStatus(of: device.name, to: .running)
+        }
     }
 }
