@@ -8,16 +8,26 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
     
     steps:
-      - name: Checkout
+      - name: Checkout with tags
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Delete existing tag if exists
+        run: |
+          git push --delete origin v${{ github.event.inputs.version }} 2>/dev/null || true
+          git tag -d v${{ github.event.inputs.version }} 2>/dev/null || true
 
       - name: Build Release
         run: |
@@ -50,12 +60,10 @@ jobs:
             DroidKit-${{ github.event.inputs.version }}.dmg
 
       - name: Upload Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: DroidKit ${{ github.event.inputs.version }}
           body: ${{ steps.changelog.outputs.content }}
           files: DroidKit-${{ github.event.inputs.version }}.dmg
           draft: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
