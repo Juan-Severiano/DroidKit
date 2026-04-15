@@ -106,8 +106,7 @@ final class ADBService {
                 }
             var devices = [AVDevice]()
             for serial in serials {
-                let (model, manufacturer) = Self.fetchDeviceInfo(sdk: sdk, serial: serial)
-                let displayName = manufacturer.isEmpty ? model : "\(manufacturer) \(model)"
+                let displayName = Self.fetchDeviceDisplayName(sdk: sdk, serial: serial)
                 devices.append(AVDevice(name: displayName, serial: serial, status: .running, kind: .usbDevice))
             }
             return devices
@@ -133,8 +132,7 @@ final class ADBService {
                 }
             var devices = [AVDevice]()
             for serial in serials {
-                let (model, manufacturer) = Self.fetchDeviceInfo(sdk: sdk, serial: serial)
-                let displayName = manufacturer.isEmpty ? model : "\(manufacturer) \(model)"
+                let displayName = Self.fetchDeviceDisplayName(sdk: sdk, serial: serial)
                 devices.append(AVDevice(name: displayName, serial: serial, status: .running, kind: .wifiDevice))
             }
             return devices
@@ -186,6 +184,9 @@ final class ADBService {
         }.value
     }
 
+    // Delay after switching to TCP/IP mode before connecting wirelessly
+    private static let tcpipTransitionDelay: Duration = .seconds(1)
+
     // Converts a USB-connected device to Wi-Fi debugging
     func convertToWiFi(serial: String) async throws -> String {
         guard let sdk = sdkPath else { throw SDKError.notFound }
@@ -194,7 +195,7 @@ final class ADBService {
             _ = try Self.run(sdk + "/platform-tools/adb", ["-s", serial, "tcpip", "5555"])
 
             // Brief pause to let the device restart in TCP/IP mode
-            try await Task.sleep(for: .seconds(1))
+            try await Task.sleep(for: Self.tcpipTransitionDelay)
 
             // Step 2: Get the device's Wi-Fi IP address
             let ipOutput = try Self.run(sdk + "/platform-tools/adb",
@@ -235,15 +236,15 @@ final class ADBService {
                       encoding: .utf8) ?? ""
     }
 
-    /// Queries device model and manufacturer via adb getprop.
-    private static func fetchDeviceInfo(sdk: String, serial: String) -> (model: String, manufacturer: String) {
+    /// Queries device model and manufacturer via adb getprop and returns a display name.
+    private static func fetchDeviceDisplayName(sdk: String, serial: String) -> String {
         let model = (try? run(sdk + "/platform-tools/adb",
                                ["-s", serial, "shell", "getprop", "ro.product.model"]))?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? serial
         let manufacturer = (try? run(sdk + "/platform-tools/adb",
                                       ["-s", serial, "shell", "getprop", "ro.product.manufacturer"]))?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return (model, manufacturer)
+        return manufacturer.isEmpty ? model : "\(manufacturer) \(model)"
     }
 
     /// Parses an IPv4 address from `ip addr show wlan0` output (inet line).
