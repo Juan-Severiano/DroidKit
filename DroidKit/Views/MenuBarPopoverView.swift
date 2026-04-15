@@ -128,13 +128,23 @@ struct DeviceRow: View {
     private var actionButton: some View {
         switch device.kind {
         case .usbDevice:
-            EmptyView()
+            usbActionButton
         case .emulator:
             emulatorActionButton
         case .wifiDevice:
             Button("Disconnect") { Task { await viewModel.disconnectWiFi(device) } }
                 .controlSize(.small)
                 .foregroundStyle(.red)
+        }
+    }
+
+    @ViewBuilder
+    private var usbActionButton: some View {
+        if device.status == .starting {
+            ProgressView().controlSize(.small)
+        } else {
+            Button("To Wi-Fi") { Task { await viewModel.convertToWiFi(device) } }
+                .controlSize(.small)
         }
     }
 

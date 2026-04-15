@@ -196,6 +196,34 @@ final class ADBService {
         }.value
     }
 
+    // Converts a USB-connected device to Wi-Fi debugging
+    func convertToWiFi(serial: String) async throws -> String {
+        guard let sdk = sdkPath else { throw SDKError.notFound }
+        return try await Task.detached(priority: .userInitiated) {
+            // Step 1: Switch device to TCP/IP mode
+            _ = try Self.run(sdk + "/platform-tools/adb", ["-s", serial, "tcpip", "5555"])
+
+            // Brief pause to let the device restart in TCP/IP mode
+            Thread.sleep(forTimeInterval: 1)
+
+            // Step 2: Get the device's Wi-Fi IP address
+            let ipOutput = try Self.run(sdk + "/platform-tools/adb",
+                                         ["-s", serial, "shell", "ip", "addr", "show", "wlan0"])
+            guard let ip = Self.parseIPAddress(from: ipOutput) else {
+                throw WiFiError.ipNotFound
+            }
+
+            // Step 3: Connect wirelessly
+            let wifiSerial = "\(ip):5555"
+            let connectOutput = try Self.run(sdk + "/platform-tools/adb", ["connect", wifiSerial])
+            let trimmed = connectOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.lowercased().contains("failed") || trimmed.lowercased().contains("error") {
+                throw WiFiError.connectionFailed(trimmed)
+            }
+            return wifiSerial
+        }.value
+    }
+
     func isRunningLocally(name: String) -> Bool {
         runningProcesses[name] != nil
     }
@@ -215,6 +243,20 @@ final class ADBService {
         process.waitUntilExit()
         return String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
                       encoding: .utf8) ?? ""
+    }
+
+    /// Parses an IPv4 address from `ip addr show wlan0` output (inet line).
+    static func parseIPAddress(from output: String) -> String? {
+        for line in output.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.hasPrefix("inet ") else { continue }
+            // Format: "inet 192.168.1.42/24 ..."
+            let parts = trimmed.components(separatedBy: " ")
+            guard parts.count >= 2 else { continue }
+            let ipWithMask = parts[1]
+            return ipWithMask.components(separatedBy: "/").first
+        }
+        return nil
     }
 
     enum SDKError: LocalizedError {

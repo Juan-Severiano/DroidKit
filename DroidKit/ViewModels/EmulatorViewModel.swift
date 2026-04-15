@@ -92,4 +92,17 @@ final class EmulatorViewModel {
             self.error = error.localizedDescription
         }
     }
+
+    func convertToWiFi(_ device: AVDevice) async {
+        guard device.kind == .usbDevice else { return }
+        updateStatus(of: device.name, to: .starting)
+        error = nil
+        do {
+            _ = try await service.convertToWiFi(serial: device.serial)
+            await refresh()
+        } catch {
+            self.error = error.localizedDescription
+            updateStatus(of: device.name, to: .running)
+        }
+    }
 }
