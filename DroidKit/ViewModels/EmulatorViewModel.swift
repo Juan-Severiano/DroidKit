@@ -8,6 +8,8 @@ final class EmulatorViewModel {
     var isLoading = false
     var error: String?
     var sdkMissing = false
+    var wifiHost = ""
+    var isConnectingWiFi = false
 
     private let service = ADBService()
 
@@ -23,12 +25,14 @@ final class EmulatorViewModel {
             let names   = try await service.listAVDs()
             let running = await service.runningAVDNames()
             let usbDevices = await service.listUSBDevices()
+            let wifiDevices = await service.listWiFiDevices()
             var allDevices = names.map { name in
                 let serial = running[name] ?? ""
                 let isRunning = !serial.isEmpty || service.isRunningLocally(name: name)
                 return AVDevice(name: name, serial: serial, status: isRunning ? .running : .stopped, kind: .emulator)
             }
             allDevices.append(contentsOf: usbDevices)
+            allDevices.append(contentsOf: wifiDevices)
             devices = allDevices
         } catch ADBService.SDKError.notFound {
             sdkMissing = true
@@ -62,5 +66,30 @@ final class EmulatorViewModel {
     private func updateStatus(of name: String, to status: DeviceStatus) {
         guard let idx = devices.firstIndex(where: { $0.name == name }) else { return }
         devices[idx].status = status
+    }
+
+    func connectWiFi() async {
+        let host = wifiHost.trimmingCharacters(in: .whitespaces)
+        guard !host.isEmpty else { return }
+        isConnectingWiFi = true
+        error = nil
+        do {
+            _ = try await service.connectWiFiDevice(host: host)
+            wifiHost = ""
+            await refresh()
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isConnectingWiFi = false
+    }
+
+    func disconnectWiFi(_ device: AVDevice) async {
+        error = nil
+        do {
+            try await service.disconnectWiFiDevice(serial: device.serial)
+            devices.removeAll { $0.serial == device.serial }
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 }

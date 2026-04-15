@@ -119,6 +119,38 @@ final class ADBService {
         }.value
     }
 
+    // Lists devices connected via Wi-Fi (ip:port format serials)
+    func listWiFiDevices() async -> [AVDevice] {
+        guard let sdk = sdkPath else { return [] }
+        return await Task.detached(priority: .userInitiated) {
+            guard let devicesOutput = try? Self.run(sdk + "/platform-tools/adb", ["devices"])
+            else { return [AVDevice]() }
+            let serials = devicesOutput.components(separatedBy: "\n")
+                .dropFirst()
+                .compactMap { line -> String? in
+                    let parts = line.components(separatedBy: "\t")
+                    guard parts.count >= 2,
+                          parts[1].trimmingCharacters(in: .whitespaces) == "device",
+                          !parts[0].hasPrefix("emulator-"),
+                          parts[0].contains(":")
+                    else { return nil }
+                    return parts[0]
+                }
+            var devices = [AVDevice]()
+            for serial in serials {
+                let model = (try? Self.run(sdk + "/platform-tools/adb",
+                                           ["-s", serial, "shell", "getprop", "ro.product.model"]))?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? serial
+                let manufacturer = (try? Self.run(sdk + "/platform-tools/adb",
+                                                   ["-s", serial, "shell", "getprop", "ro.product.manufacturer"]))?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let displayName = manufacturer.isEmpty ? model : "\(manufacturer) \(model)"
+                devices.append(AVDevice(name: displayName, serial: serial, status: .running, kind: .wifiDevice))
+            }
+            return devices
+        }.value
+    }
+
     // Non-blocking launch; pass onTerminate to be called on MainActor when the process exits
     func launchEmulator(name: String, onTerminate: @escaping @MainActor () -> Void) throws {
         guard let sdk = sdkPath else { throw SDKError.notFound }
@@ -140,6 +172,28 @@ final class ADBService {
         }
         runningProcesses[name]?.terminate()
         runningProcesses.removeValue(forKey: name)
+    }
+
+    // MARK: - Wi-Fi device operations
+
+    func connectWiFiDevice(host: String, port: Int = 5555) async throws -> String {
+        guard let sdk = sdkPath else { throw SDKError.notFound }
+        let serial = "\(host):\(port)"
+        return try await Task.detached(priority: .userInitiated) {
+            let output = try Self.run(sdk + "/platform-tools/adb", ["connect", serial])
+            let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.lowercased().contains("failed") || trimmed.lowercased().contains("error") {
+                throw WiFiError.connectionFailed(trimmed)
+            }
+            return serial
+        }.value
+    }
+
+    func disconnectWiFiDevice(serial: String) async throws {
+        guard let sdk = sdkPath else { throw SDKError.notFound }
+        try await Task.detached(priority: .userInitiated) {
+            _ = try Self.run(sdk + "/platform-tools/adb", ["disconnect", serial])
+        }.value
     }
 
     func isRunningLocally(name: String) -> Bool {
@@ -167,6 +221,17 @@ final class ADBService {
         case notFound
         var errorDescription: String? {
             "Android SDK not found. Set ANDROID_HOME or install at ~/Library/Android/sdk."
+        }
+    }
+
+    enum WiFiError: LocalizedError {
+        case connectionFailed(String)
+        case ipNotFound
+        var errorDescription: String? {
+            switch self {
+            case .connectionFailed(let msg): return "Wi-Fi connection failed: \(msg)"
+            case .ipNotFound: return "Could not determine device Wi-Fi IP address."
+            }
         }
     }
 }

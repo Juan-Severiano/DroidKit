@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MenuBarPopoverView: View {
-    var viewModel: EmulatorViewModel
+    @Bindable var viewModel: EmulatorViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -50,6 +50,7 @@ struct MenuBarPopoverView: View {
                 }
             }
             .frame(maxHeight: 320)
+            wifiConnectRow
         }
     }
 
@@ -62,6 +63,25 @@ struct MenuBarPopoverView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 80)
         .padding(.horizontal, 12)
+    }
+
+    private var wifiConnectRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi")
+                .foregroundStyle(.secondary)
+            TextField("IP address", text: $viewModel.wifiHost)
+                .textFieldStyle(.roundedBorder)
+                .controlSize(.small)
+            if viewModel.isConnectingWiFi {
+                ProgressView().controlSize(.small)
+            } else {
+                Button("Connect") { Task { await viewModel.connectWiFi() } }
+                    .controlSize(.small)
+                    .disabled(viewModel.wifiHost.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     private var footer: some View {
@@ -112,7 +132,9 @@ struct DeviceRow: View {
         case .emulator:
             emulatorActionButton
         case .wifiDevice:
-            EmptyView()
+            Button("Disconnect") { Task { await viewModel.disconnectWiFi(device) } }
+                .controlSize(.small)
+                .foregroundStyle(.red)
         }
     }
 
