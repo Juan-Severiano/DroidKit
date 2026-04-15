@@ -1,0 +1,61 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build Release
+        run: |
+          xcodebuild -project DroidKit.xcodeproj \
+            -scheme DroidKit \
+            -configuration Release \
+            -derivedDataPath DerivedData \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Get Changelog
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Extract content between first h2 and end or next h2
+            CONTENT=$(sed -n '/^## /{n;:a;N;/^## /!ba;p}' CHANGELOG.md | head -c 5000)
+            echo "content=$CONTENT" >> $GITHUB_OUTPUT
+          else
+            echo "content=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create DMG
+        run: |
+          APP_PATH=$(find DerivedData -name "DroidKit.app" -type d | head -1)
+          hdiutil create -volname "DroidKit" \
+            -srcfolder "$APP_PATH" \
+            -ov \
+            -format UDZO \
+            DroidKit-${{ github.event.inputs.version }}.dmg
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: DroidKit ${{ github.event.inputs.version }}
+          body: ${{ steps.changelog.outputs.content }}
+          files: DroidKit-${{ github.event.inputs.version }}.dmg
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

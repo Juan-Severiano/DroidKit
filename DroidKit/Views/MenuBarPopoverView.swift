@@ -4,161 +4,288 @@ struct MenuBarPopoverView: View {
     @Bindable var viewModel: EmulatorViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
+        VStack(spacing: 0) {
+            headerSection
             Divider()
-            content
+            contentSection
             Divider()
-            footer
+            footerSection
         }
-        .frame(width: 300)
+        .frame(width: 320, height: 400)
         .task { await viewModel.refresh() }
     }
 
-    private var header: some View {
+    private var headerSection: some View {
         HStack {
-            Text("DroidKit").font(.headline)
+            Text("DroidKit")
+                .font(.headline)
             Spacer()
             if viewModel.isLoading {
-                ProgressView().controlSize(.small)
+                ProgressView()
+                    .controlSize(.small)
             } else {
-                Button { Task { await viewModel.refresh() } } label: {
+                Button {
+                    Task { await viewModel.refresh() }
+                } label: {
                     Image(systemName: "arrow.clockwise")
                 }
                 .buttonStyle(.plain)
+                .help("Refresh devices")
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
     @ViewBuilder
-    private var content: some View {
+    private var contentSection: some View {
         if viewModel.sdkMissing {
             sdkMissingView
         } else if viewModel.devices.isEmpty && !viewModel.isLoading {
-            Text("No AVDs found")
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, minHeight: 60)
+            emptyStateView
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(viewModel.devices) { device in
-                        DeviceRow(device: device, viewModel: viewModel)
-                        Divider().padding(.leading, 36)
-                    }
-                }
-            }
-            .frame(maxHeight: 320)
-            wifiConnectRow
+            deviceListView
         }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "android")
+                .font(.system(size: 32))
+                .foregroundStyle(.tertiary)
+            Text("No devices found")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text("Connect a device or start an emulator")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     private var sdkMissingView: some View {
-        VStack(spacing: 4) {
-            Text("Android SDK not found").foregroundStyle(.secondary)
+        VStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 28))
+                .foregroundStyle(.orange)
+            Text("Android SDK Not Found")
+                .font(.subheadline)
+                .fontWeight(.medium)
             Text("Set ANDROID_HOME or install SDK at\n~/Library/Android/sdk")
-                .font(.caption).foregroundStyle(.tertiary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity, minHeight: 80)
-        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
-    private var wifiConnectRow: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "wifi")
-                .foregroundStyle(.secondary)
-            TextField("IP address", text: $viewModel.wifiHost)
-                .textFieldStyle(.roundedBorder)
-                .controlSize(.small)
-            if viewModel.isConnectingWiFi {
-                ProgressView().controlSize(.small)
-            } else {
-                Button("Connect") { Task { await viewModel.connectWiFi() } }
-                    .controlSize(.small)
-                    .disabled(viewModel.wifiHost.trimmingCharacters(in: .whitespaces).isEmpty)
+    private var deviceListView: some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(viewModel.devices) { device in
+                    DeviceRowView(device: device, viewModel: viewModel)
+                    Divider().padding(.leading, 52)
+                }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
     }
 
-    private var footer: some View {
+    private var footerSection: some View {
         HStack {
-            if let err = viewModel.error {
-                Text(err).font(.caption).foregroundStyle(.red).lineLimit(2)
+            if let error = viewModel.error {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.caption)
+                    Text(error)
+                        .font(.caption)
+                }
+                .foregroundStyle(.red)
+                .lineLimit(2)
             }
             Spacer()
-            Button("Quit") { NSApplication.shared.terminate(nil) }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .font(.caption)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
 }
 
-struct DeviceRow: View {
+struct DeviceRowView: View {
     let device: AVDevice
     let viewModel: EmulatorViewModel
 
     var body: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
-            Text(device.name).lineLimit(1)
+        HStack(spacing: 12) {
+            deviceIcon
+            deviceInfo
             Spacer()
-            actionButton
+            deviceAction
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+    }
+
+    private var deviceIcon: some View {
+        ZStack {
+            Circle()
+                .fill(iconBackgroundColor)
+                .frame(width: 32, height: 32)
+            Image(systemName: iconName)
+                .font(.system(size: 14))
+                .foregroundStyle(iconForegroundColor)
+        }
+    }
+
+    private var deviceInfo: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(device.name)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .lineLimit(1)
+            HStack(spacing: 4) {
+                statusIndicator
+                Text(statusText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var statusIndicator: some View {
+        Circle()
+            .fill(statusColor)
+            .frame(width: 6, height: 6)
+    }
+
+    private var statusText: String {
+        switch device.status {
+        case .stopped: return "Stopped"
+        case .starting: return "Starting..."
+        case .running: return "Connected"
+        case .stopping: return "Stopping..."
+        }
+    }
+
+    @ViewBuilder
+    private var deviceAction: some View {
+        switch device.kind {
+        case .emulator:
+            emulatorActions
+        case .usbDevice:
+            usbActions
+        case .wifiDevice:
+            wifiActions
+        }
+    }
+
+    @ViewBuilder
+    private var emulatorActions: some View {
+        switch device.status {
+        case .stopped:
+            Button {
+                viewModel.launch(device)
+            } label: {
+                Text("Start")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+        case .starting, .stopping:
+            ProgressView()
+                .controlSize(.small)
+        case .running:
+            Button {
+                viewModel.stop(device)
+            } label: {
+                Text("Stop")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .buttonStyle(.bordered)
+            .tint(.red)
+            .controlSize(.small)
+        }
+    }
+
+    @ViewBuilder
+    private var usbActions: some View {
+        if device.status == .starting {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            Button {
+                Task { await viewModel.convertToWiFi(device) }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "wifi")
+                        .font(.caption2)
+                    Text("Connect")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+    }
+
+    @ViewBuilder
+    private var wifiActions: some View {
+        Button {
+            Task { await viewModel.disconnectWiFi(device) }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "wifi.slash")
+                    .font(.caption2)
+                Text("Disconnect")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+        }
+        .buttonStyle(.bordered)
+        .tint(.red)
+        .controlSize(.small)
+    }
+
+    private var iconName: String {
+        switch device.kind {
+        case .emulator: return "desktopcomputer"
+        case .usbDevice: return "cable.connector"
+        case .wifiDevice: return "wifi"
+        }
+    }
+
+    private var iconBackgroundColor: Color {
+        switch device.kind {
+        case .emulator: return .blue.opacity(0.15)
+        case .usbDevice: return .green.opacity(0.15)
+        case .wifiDevice: return .purple.opacity(0.15)
+        }
+    }
+
+    private var iconForegroundColor: Color {
+        switch device.kind {
+        case .emulator: return .blue
+        case .usbDevice: return .green
+        case .wifiDevice: return .purple
+        }
     }
 
     private var statusColor: Color {
         switch device.status {
-        case .stopped:  .gray
-        case .starting: .yellow
-        case .running:  .green
-        case .stopping: .orange
-        }
-    }
-
-    @ViewBuilder
-    private var actionButton: some View {
-        switch device.kind {
-        case .usbDevice:
-            usbActionButton
-        case .emulator:
-            emulatorActionButton
-        case .wifiDevice:
-            Button("Disconnect") { Task { await viewModel.disconnectWiFi(device) } }
-                .controlSize(.small)
-                .foregroundStyle(.red)
-        }
-    }
-
-    @ViewBuilder
-    private var usbActionButton: some View {
-        if device.status == .starting {
-            ProgressView().controlSize(.small)
-        } else {
-            Button("To Wi-Fi") { Task { await viewModel.convertToWiFi(device) } }
-                .controlSize(.small)
-        }
-    }
-
-    @ViewBuilder
-    private var emulatorActionButton: some View {
-        switch device.status {
-        case .stopped:
-            Button("Start") { viewModel.launch(device) }.controlSize(.small)
-        case .starting, .stopping:
-            ProgressView().controlSize(.small)
-        case .running:
-            Button("Stop") { viewModel.stop(device) }
-                .controlSize(.small)
-                .foregroundStyle(.red)
+        case .stopped: return .gray
+        case .starting: return .yellow
+        case .running: return .green
+        case .stopping: return .orange
         }
     }
 }

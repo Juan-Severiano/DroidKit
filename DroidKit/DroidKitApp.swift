@@ -8,7 +8,8 @@ struct DroidKitApp: App {
         MenuBarExtra {
             MenuBarPopoverView(viewModel: viewModel)
         } label: {
-            Image(systemName: "iphone")
+            Image("AndroidIcon")
+                .resizable()
                 .renderingMode(.template)
         }
         .menuBarExtraStyle(.window)

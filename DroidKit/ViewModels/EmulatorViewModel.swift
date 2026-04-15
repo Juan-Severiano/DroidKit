@@ -8,8 +8,6 @@ final class EmulatorViewModel {
     var isLoading = false
     var error: String?
     var sdkMissing = false
-    var wifiHost = ""
-    var isConnectingWiFi = false
 
     private let service = ADBService()
 
@@ -66,21 +64,6 @@ final class EmulatorViewModel {
     private func updateStatus(of name: String, to status: DeviceStatus) {
         guard let idx = devices.firstIndex(where: { $0.name == name }) else { return }
         devices[idx].status = status
-    }
-
-    func connectWiFi() async {
-        let host = wifiHost.trimmingCharacters(in: .whitespaces)
-        guard !host.isEmpty else { return }
-        isConnectingWiFi = true
-        error = nil
-        do {
-            _ = try await service.connectWiFiDevice(host: host)
-            wifiHost = ""
-            await refresh()
-        } catch {
-            self.error = error.localizedDescription
-        }
-        isConnectingWiFi = false
     }
 
     func disconnectWiFi(_ device: AVDevice) async {
