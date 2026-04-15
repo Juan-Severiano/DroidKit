@@ -106,6 +106,18 @@ struct DeviceRow: View {
 
     @ViewBuilder
     private var actionButton: some View {
+        switch device.kind {
+        case .usbDevice:
+            EmptyView()
+        case .emulator:
+            emulatorActionButton
+        case .wifiDevice:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private var emulatorActionButton: some View {
         switch device.status {
         case .stopped:
             Button("Start") { viewModel.launch(device) }.controlSize(.small)

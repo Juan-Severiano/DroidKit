@@ -22,10 +22,14 @@ final class EmulatorViewModel {
         do {
             let names   = try await service.listAVDs()
             let running = await service.runningAVDNames()
-            devices = names.map { name in
-                let isRunning = running.contains(name) || service.isRunningLocally(name: name)
-                return AVDevice(name: name, status: isRunning ? .running : .stopped)
+            let usbDevices = await service.listUSBDevices()
+            var allDevices = names.map { name in
+                let serial = running[name] ?? ""
+                let isRunning = !serial.isEmpty || service.isRunningLocally(name: name)
+                return AVDevice(name: name, serial: serial, status: isRunning ? .running : .stopped, kind: .emulator)
             }
+            allDevices.append(contentsOf: usbDevices)
+            devices = allDevices
         } catch ADBService.SDKError.notFound {
             sdkMissing = true
             devices = []

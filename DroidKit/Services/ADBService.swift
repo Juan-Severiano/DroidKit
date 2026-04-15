@@ -62,11 +62,11 @@ final class ADBService {
     }
 
     // Returns AVD names of currently running emulators (detected via adb)
-    func runningAVDNames() async -> Set<String> {
-        guard let sdk = sdkPath else { return [] }
+    func runningAVDNames() async -> [String: String] {
+        guard let sdk = sdkPath else { return [:] }
         return await Task.detached(priority: .userInitiated) {
             guard let devicesOutput = try? Self.run(sdk + "/platform-tools/adb", ["devices"])
-            else { return Set<String>() }
+            else { return [String: String]() }
             let serials = devicesOutput.components(separatedBy: "\n")
                 .dropFirst()
                 .compactMap { line -> String? in
@@ -74,16 +74,48 @@ final class ADBService {
                     guard parts.count >= 2, parts[0].hasPrefix("emulator-") else { return nil }
                     return parts[0]
                 }
-            var names = Set<String>()
+            var nameToSerial = [String: String]()
             for serial in serials {
                 if let raw = try? Self.run(sdk + "/platform-tools/adb",
                                            ["-s", serial, "emu", "avd", "name"]),
                    let name = raw.components(separatedBy: "\n").first?.trimmingCharacters(in: .whitespaces),
                    !name.isEmpty {
-                    names.insert(name)
+                    nameToSerial[name] = serial
                 }
             }
-            return names
+            return nameToSerial
+        }.value
+    }
+
+    // Lists physical devices connected via USB cable
+    func listUSBDevices() async -> [AVDevice] {
+        guard let sdk = sdkPath else { return [] }
+        return await Task.detached(priority: .userInitiated) {
+            guard let devicesOutput = try? Self.run(sdk + "/platform-tools/adb", ["devices"])
+            else { return [AVDevice]() }
+            let serials = devicesOutput.components(separatedBy: "\n")
+                .dropFirst()
+                .compactMap { line -> String? in
+                    let parts = line.components(separatedBy: "\t")
+                    guard parts.count >= 2,
+                          parts[1].trimmingCharacters(in: .whitespaces) == "device",
+                          !parts[0].hasPrefix("emulator-"),
+                          !parts[0].contains(":")
+                    else { return nil }
+                    return parts[0]
+                }
+            var devices = [AVDevice]()
+            for serial in serials {
+                let model = (try? Self.run(sdk + "/platform-tools/adb",
+                                           ["-s", serial, "shell", "getprop", "ro.product.model"]))?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? serial
+                let manufacturer = (try? Self.run(sdk + "/platform-tools/adb",
+                                                   ["-s", serial, "shell", "getprop", "ro.product.manufacturer"]))?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let displayName = manufacturer.isEmpty ? model : "\(manufacturer) \(model)"
+                devices.append(AVDevice(name: displayName, serial: serial, status: .running, kind: .usbDevice))
+            }
+            return devices
         }.value
     }
 
