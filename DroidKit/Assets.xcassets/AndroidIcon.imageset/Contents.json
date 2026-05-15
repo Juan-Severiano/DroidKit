@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "android-head.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -16,5 +17,8 @@
   "info" : {
     "author" : "xcode",
     "version" : 1
+  },
+  "properties" : {
+    "template-rendering-intent" : "template"
   }
 }

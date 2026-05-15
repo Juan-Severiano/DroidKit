@@ -1,0 +1,96 @@
+{
+  "source": "/Volumes/Juan/Developer/DroidKit/DroidKit/Views/MenuBarPopoverView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "DroidKit",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "Refresh devices",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "No devices found",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connect a device or start an emulator",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Android SDK Not Found",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set ANDROID_HOME or install SDK at\n~/Library/Android/sdk",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quit",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stop",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connect",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 231
+        }
+      },
+      {
+        "comment": "",
+        "key": "Disconnect",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 249
+        }
+      }
+    ]
+  },
+  "version": 1
+}

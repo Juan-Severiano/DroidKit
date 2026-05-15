@@ -1,0 +1,16 @@
+{
+  "source": "/Volumes/Juan/Developer/DroidKit/DroidKit/DroidKitApp.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "DroidKit",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 8
+        }
+      }
+    ]
+  },
+  "version": 1
+}

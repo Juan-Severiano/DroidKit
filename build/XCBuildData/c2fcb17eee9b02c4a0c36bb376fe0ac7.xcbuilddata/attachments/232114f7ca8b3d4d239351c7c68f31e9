@@ -1,0 +1,69 @@
+{
+  "" : {
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKit-primary.dia",
+    "emit-module-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKit-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKit-primary-emit-module.dia",
+    "pch" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKit-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKit-primary.swiftdeps"
+  },
+  "/Volumes/Juan/Developer/DroidKit/DroidKit/DroidKitApp.swift" : {
+    "const-values" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.swiftconstvalues",
+    "dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.d",
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.dia",
+    "index-unit-output-path" : "/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.o",
+    "llvm-bc" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.bc",
+    "object" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.o",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp.swiftdeps",
+    "swiftmodule" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/DroidKitApp~partial.swiftmodule"
+  },
+  "/Volumes/Juan/Developer/DroidKit/DroidKit/Models/AVDevice.swift" : {
+    "const-values" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.swiftconstvalues",
+    "dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.d",
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.dia",
+    "index-unit-output-path" : "/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.o",
+    "llvm-bc" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.bc",
+    "object" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.o",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice.swiftdeps",
+    "swiftmodule" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/AVDevice~partial.swiftmodule"
+  },
+  "/Volumes/Juan/Developer/DroidKit/DroidKit/Services/ADBService.swift" : {
+    "const-values" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.swiftconstvalues",
+    "dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.d",
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.dia",
+    "index-unit-output-path" : "/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.o",
+    "llvm-bc" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.bc",
+    "object" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.o",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService.swiftdeps",
+    "swiftmodule" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/ADBService~partial.swiftmodule"
+  },
+  "/Volumes/Juan/Developer/DroidKit/DroidKit/ViewModels/EmulatorViewModel.swift" : {
+    "const-values" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.swiftconstvalues",
+    "dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.d",
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.dia",
+    "index-unit-output-path" : "/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.o",
+    "llvm-bc" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.bc",
+    "object" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.o",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel.swiftdeps",
+    "swiftmodule" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/EmulatorViewModel~partial.swiftmodule"
+  },
+  "/Volumes/Juan/Developer/DroidKit/DroidKit/Views/MenuBarPopoverView.swift" : {
+    "const-values" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.swiftconstvalues",
+    "dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.d",
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.dia",
+    "index-unit-output-path" : "/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.o",
+    "llvm-bc" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.bc",
+    "object" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.o",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView.swiftdeps",
+    "swiftmodule" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/MenuBarPopoverView~partial.swiftmodule"
+  },
+  "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Volumes/Juan/Developer/DroidKit/build/DroidKit.build/Debug/DroidKit.build/Objects-normal/x86_64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

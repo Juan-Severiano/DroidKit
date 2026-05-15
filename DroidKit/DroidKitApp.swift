@@ -5,12 +5,8 @@ struct DroidKitApp: App {
     @State private var viewModel = EmulatorViewModel()
 
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra("DroidKit", image: "AndroidIcon") {
             MenuBarPopoverView(viewModel: viewModel)
-        } label: {
-            Image("AndroidIcon")
-                .resizable()
-                .renderingMode(.template)
         }
         .menuBarExtraStyle(.window)
     }

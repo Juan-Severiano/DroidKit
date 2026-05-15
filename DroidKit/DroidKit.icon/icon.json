@@ -1,0 +1,47 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.00000,0.43614,0.12614,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "test.svg",
+          "name" : "test",
+          "position" : {
+            "scale" : 0.78,
+            "translation-in-points" : [
+              193.0078125,
+              85.9765625
+            ]
+          }
+        },
+        {
+          "image-name" : "asd.svg",
+          "name" : "asd",
+          "position" : {
+            "scale" : 8.48,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
