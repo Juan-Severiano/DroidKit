@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'DroidKit' in project 'DroidKit' (no dependencies)
