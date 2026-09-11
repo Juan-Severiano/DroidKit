@@ -13,7 +13,9 @@ DroidKit is a macOS Menu Bar app for managing Android Virtual Devices (AVDs) and
 
 ## Screenshots
 
-> *(Add screenshots of the menu bar popover here if available)*
+https://github.com/user-attachments/assets/4d0084e6-c41f-455c-bf03-dd1ba9ea6d34
+
+
 
 ## Getting Started
 
